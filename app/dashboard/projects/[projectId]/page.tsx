@@ -1,20 +1,23 @@
-async function getProject(id: string) {
-  const projects: Record<string, { name: string; cost: number; client: string }> = {
-    "1": { name: "Ziido Dashboard", cost: 50000, client: "Konza" },
-    "2": { name: "Konza Portal",    cost: 100000, client: "Konza" },
-    "3": { name: "RAG Chatbot",     cost: 180000, client: "Internal" },
-  };
-
-  return projects[id];
-}
+import Link from "next/link";
+import { prisma } from "../../../../lib/prisma";
+import { getCurrentUser } from "../../../../lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function ProjectPage({
   params,
 }: {
   params: Promise<{ projectId: string }>;
 }) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   const { projectId } = await params;
-  const project = await getProject(projectId);
+  const id = Number(projectId);
+
+  const project = await prisma.project.findFirst({
+    where: { id, userId: user.id },
+    include: { client: true },
+  });
 
   if (!project) {
     return <p className="text-red-600">Project not found.</p>;
@@ -22,9 +25,22 @@ export default async function ProjectPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">{project.name}</h1>
-      <p>Client: {project.client}</p>
+      <div className="flex items-center gap-4 mb-4">
+        <h1 className="text-2xl font-bold">{project.name}</h1>
+        <Link
+          href={`/dashboard/projects/${project.id}/edit`}
+          className="text-blue-600 hover:underline text-sm"
+        >
+          Edit
+        </Link>
+      </div>
+
+      <p>Client: {project.client?.name ?? "—"}</p>
+      {project.client?.email && <p>Email: {project.client.email}</p>}
       <p>Cost: KES {project.cost}</p>
+      <p className="text-sm text-gray-500 mt-4">
+        Created: {project.createdAt.toLocaleString()}
+      </p>
     </div>
   );
 }

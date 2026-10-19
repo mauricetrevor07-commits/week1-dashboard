@@ -3,6 +3,7 @@ import LikeButton from "./LikeButton";
 import { addClient, addProject } from "./actions";
 import { prisma } from "../../lib/prisma";
 import { logout } from "../auth/actions";
+import DeleteButton from "./DeleteButton";
 
 export default async function DashboardPage() {
   const [projects, clients] = await Promise.all([
@@ -94,7 +95,7 @@ export default async function DashboardPage() {
         ) : (
           <ul className="space-y-2">
             {projects.map((p) => (
-              <li key={p.id}>
+              <li key={p.id} className="flex items-center">
                 <Link
                   href={`/dashboard/projects/${p.id}`}
                   className="text-blue-600 hover:underline"
@@ -102,8 +103,9 @@ export default async function DashboardPage() {
                   {p.name} — KES {p.cost}
                 </Link>
                 {p.client && (
-                  <span className="text-gray-500"> · {p.client.name}</span>
+                  <span className="text-gray-500 ml-2"> · {p.client.name}</span>
                 )}
+                <DeleteButton projectId={p.id} />
               </li>
             ))}
           </ul>
